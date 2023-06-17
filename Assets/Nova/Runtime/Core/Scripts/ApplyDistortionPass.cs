@@ -22,14 +22,14 @@ namespace Nova.Runtime.Core.Scripts
         
         private ScriptableRenderer _renderer;
         private RenderTargetIdentifier _distortedUvBufferIdentifier;
-        private RenderTargetHandle _tempRenderTargetHandle;
+        private RTHandle _tempRenderTargetHandle;
 
         public ApplyDistortionPass(bool applyToSceneView, Shader shader)
         {
             _applyToSceneView = applyToSceneView;
             _srcToDestProfilingSampler = new ProfilingSampler(SrcToDestProfilingSamplerName);
             _renderPassProfilingSampler = new ProfilingSampler(RenderPassName);
-            _tempRenderTargetHandle.Init("_TempRT");
+            _tempRenderTargetHandle = RTHandles.Alloc("_TempRT", name: "_TempRT");
             _material = CoreUtils.CreateEngineMaterial(shader);
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
@@ -56,20 +56,20 @@ namespace Nova.Runtime.Core.Scripts
             cmd.Clear();
             using (new ProfilingScope(cmd, _renderPassProfilingSampler))
             {
-                var source = _renderer.cameraColorTarget;
+                var source = _renderer.cameraColorTargetHandle;
                 var tempTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
                 tempTargetDescriptor.depthBufferBits = 0;
-                cmd.GetTemporaryRT(_tempRenderTargetHandle.id, tempTargetDescriptor);
+                cmd.GetTemporaryRT(Shader.PropertyToID(_tempRenderTargetHandle.name), tempTargetDescriptor);
 
                 using (new ProfilingScope(cmd, _srcToDestProfilingSampler))
                 {
                     cmd.SetGlobalTexture(_mainTexPropertyId, source);
                     cmd.SetGlobalTexture(_distortionBufferPropertyId, _distortedUvBufferIdentifier);
-                    Blit(cmd, source, _tempRenderTargetHandle.Identifier(), _material);
+                    Blit(cmd, source, _tempRenderTargetHandle, _material);
                 }
 
-                Blit(cmd, _tempRenderTargetHandle.Identifier(), source);
-                cmd.ReleaseTemporaryRT(_tempRenderTargetHandle.id);
+                Blit(cmd, _tempRenderTargetHandle, source);
+                cmd.ReleaseTemporaryRT(Shader.PropertyToID(_tempRenderTargetHandle.name));
             }
             
             context.ExecuteCommandBuffer(cmd);
