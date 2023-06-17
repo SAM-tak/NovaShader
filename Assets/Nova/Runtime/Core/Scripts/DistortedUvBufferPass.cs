@@ -15,10 +15,10 @@ namespace Nova.Runtime.Core.Scripts
         private readonly ProfilingSampler _profilingSampler = new ProfilingSampler(ProfilerTag);
         private readonly RenderQueueRange _renderQueueRange = RenderQueueRange.all;
         private readonly ShaderTagId _shaderTagId;
-        private Func<RenderTargetIdentifier> _getCameraDepthTargetIdentifier;
+        private Func<RTHandle> _getCameraDepthTargetHandle;
         private FilteringSettings _filteringSettings;
 
-        private RenderTargetIdentifier _renderTargetIdentifier;
+        private RTHandle _renderTargetHandle;
 
         public DistortedUvBufferPass(string lightMode)
         {
@@ -27,18 +27,18 @@ namespace Nova.Runtime.Core.Scripts
             _shaderTagId = new ShaderTagId(lightMode);
         }
 
-        public void Setup(RenderTargetIdentifier renderTargetIdentifier,
-            Func<RenderTargetIdentifier> getCameraDepthTargetIdentifier)
+        public void Setup(RTHandle renderTargetHandle, Func<RTHandle> getCameraDepthTargetHandle)
         {
-            _renderTargetIdentifier = renderTargetIdentifier;
-            _getCameraDepthTargetIdentifier = getCameraDepthTargetIdentifier;
+            _renderTargetHandle = renderTargetHandle;
+            _getCameraDepthTargetHandle = getCameraDepthTargetHandle;
         }
 
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
-            ConfigureTarget(_renderTargetIdentifier, _getCameraDepthTargetIdentifier.Invoke());
+            ConfigureTarget(_renderTargetHandle, _getCameraDepthTargetHandle.Invoke());
             ConfigureClear(ClearFlag.Color, Color.gray);
         }
+
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
             var cmd = CommandBufferPool.Get();
