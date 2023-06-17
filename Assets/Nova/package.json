@@ -1,8 +1,8 @@
 {
   "name": "jp.co.cyberagent.nova",
   "displayName": "NOVA Shader",
-  "version": "1.5.1",
-  "unity": "2020.3",
+  "version": "1.5.2.1",
+  "unity": "2023.2",
   "license": "MIT",
   "dependencies": {
   },
