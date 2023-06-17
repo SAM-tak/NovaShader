@@ -20,14 +20,18 @@ namespace Nova.Runtime.Core.Scripts
 
         private DistortedUvBufferPass _distortedUvBufferPass;
 
-        public override void Create()
+		private RTHandle _distortedUvBufferHandle;
+
+		public override void Create()
         {
             _applyDistortionShader = Shader.Find("Hidden/Nova/Particles/ApplyDistortion");
             if (_applyDistortionShader == null) return;
 
             _distortedUvBufferPass = new DistortedUvBufferPass(DistortionLightMode);
             _applyDistortionPass = new ApplyDistortionPass(_applyToSceneView, _applyDistortionShader);
-        }
+
+			_distortedUvBufferHandle = RTHandles.Alloc("distortedUvBuffer");
+		}
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
@@ -42,8 +46,8 @@ namespace Nova.Runtime.Core.Scripts
                 cameraTargetDesciptor.msaaSamples);
             var distortedUvBufferIdentifier = new RenderTargetIdentifier(distortedUvBuffer);
 
-            _distortedUvBufferPass.Setup(distortedUvBufferIdentifier, () => renderer.cameraDepthTarget);
-            _applyDistortionPass.Setup(renderer, distortedUvBufferIdentifier);
+            _distortedUvBufferPass.Setup(_distortedUvBufferHandle, () => renderer.cameraDepthTargetHandle);
+            _applyDistortionPass.Setup(renderer, _distortedUvBufferHandle);
             renderer.EnqueuePass(_distortedUvBufferPass);
             renderer.EnqueuePass(_applyDistortionPass);
             RenderTexture.ReleaseTemporary(distortedUvBuffer);
